@@ -1,0 +1,12 @@
+﻿services:
+  inventoryservice:
+    image: inventoryservice
+    build:
+      context: .
+      dockerfile: src/InventoryService/Dockerfile
+  orderservice:
+    image: orderservice
+    build:
+      context: .
+      dockerfile: src/OrderService/Dockerfile
+
