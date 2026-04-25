@@ -10,6 +10,7 @@ services:
         condition: service_healthy
     environment:
       - ConnectionStrings__Database=Host=order-db;Port=5432;Database=order;Username=order_user;Password=order_pw
+      - ASPNETCORE_ENVIRONMENT=Development
     networks:
       - backend
 
@@ -23,6 +24,7 @@ services:
         condition: service_healthy
     environment:
       - ConnectionStrings__Database=Host=inventory-db;Port=5432;Database=inventory;Username=inventory_user;Password=inventory_pw
+      - ASPNETCORE_ENVIRONMENT=Development
     networks:
       - backend
 
