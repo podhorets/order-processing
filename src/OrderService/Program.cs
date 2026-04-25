@@ -30,7 +30,11 @@ async Task ApplyDatabaseMigrations(WebApplication webApplication)
 {
     using var scope = webApplication.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
-    await db.Database.MigrateAsync();
+    var pending = await db.Database.GetPendingMigrationsAsync();
+    if (pending.Any())
+    {
+        await db.Database.MigrateAsync();
+    }
 }
 
 public sealed record SubmitOrder(Guid CustomerId, List<OrderItemDto> OrderItems);
