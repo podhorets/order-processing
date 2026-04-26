@@ -14,7 +14,7 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTime.UtcNow;
 
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {

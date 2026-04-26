@@ -11,8 +11,8 @@ public class Reservation : AuditableEntity
     public string Sku { get; private set; } = null!;
     public int Quantity { get; private set; }
     public ReservationStatus Status { get; private set; }
-    public DateTimeOffset ReservedAt { get; private set; }
-    public DateTimeOffset? ReleasedAt { get; private set; }
+    public DateTime ReservedAt { get; private set; }
+    public DateTime? ReleasedAt { get; private set; }
 
     private Reservation() { }
 
@@ -29,7 +29,7 @@ public class Reservation : AuditableEntity
         Sku = sku;
         Quantity = quantity;
         Status = ReservationStatus.Reserved;
-        ReservedAt = DateTimeOffset.UtcNow;
+        ReservedAt = DateTime.UtcNow;
     }
 
     public void MarkReleased()
@@ -37,6 +37,6 @@ public class Reservation : AuditableEntity
         if (Status == ReservationStatus.Released) 
             throw new InvalidOperationException($"Reservation {Id} is already released.");
         Status = ReservationStatus.Released;
-        ReleasedAt = DateTimeOffset.UtcNow;
+        ReleasedAt = DateTime.UtcNow;
     }
 }
