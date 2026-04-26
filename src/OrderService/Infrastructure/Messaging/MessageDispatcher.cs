@@ -1,9 +1,8 @@
 using System.Text.Json;
+using OrderService.Features.ProcessOrder;
 using OrderService.Features.RejectOrder;
-using OrderService.Features.ReleaseInventory;
 using OrderService.Features.ReserveInventory;
 using Shared.Contracts;
-using Shared.Contracts.Commands.V1;
 using Shared.Contracts.Events.V1;
 
 namespace OrderService.Infrastructure.Messaging;
@@ -18,13 +17,14 @@ public sealed class MessageDispatcher(IServiceScopeFactory scopeFactory) : IMess
                 await HandleAsync<OrderSubmitted, OrderSubmittedHandler>(json, ct);
                 break;
 
+            case MessagingQueues.InventoryReserved:
+                await HandleAsync<InventoryReserved, InventoryReservedHandler>(json, ct);
+                break;
+
             case MessagingQueues.InventoryReservationFailed:
                 await HandleAsync<InventoryReservationFailed, InventoryReservationFailedHandler>(json, ct);
                 break;
 
-            case MessagingQueues.InventoryReleased:
-                await HandleAsync<ReleaseInventory, ReleaseInventoryHandler>(json, ct);
-                break;
 
             default:
                 throw new InvalidOperationException($"Unknown message type: '{messageType}'.");

@@ -1,5 +1,5 @@
+using OrderService.Features.ProcessOrder;
 using OrderService.Features.RejectOrder;
-using OrderService.Features.ReleaseInventory;
 using OrderService.Features.ReserveInventory;
 using OrderService.Infrastructure.Messaging;
 using RabbitMQ.Client;
@@ -22,8 +22,8 @@ public static class MessagingExtensions
         services.AddSingleton<IMessageDispatcher, MessageDispatcher>();
 
         services.AddScoped<OrderSubmittedHandler>();
+        services.AddScoped<InventoryReservedHandler>();
         services.AddScoped<InventoryReservationFailedHandler>();
-        services.AddScoped<ReleaseInventoryHandler>();
 
         services.AddHostedService<RabbitMqConsumerService>();
 

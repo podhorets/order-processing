@@ -21,6 +21,7 @@ public sealed class RabbitMqConsumerService(
         var queues = new[]
         {
             MessagingQueues.OrderSubmitted,
+            MessagingQueues.InventoryReserved,
             MessagingQueues.InventoryReservationFailed,
             MessagingQueues.InventoryReleased
         };

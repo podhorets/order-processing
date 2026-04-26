@@ -76,10 +76,18 @@ public sealed class OrderSubmittedHandler(
             ctx.Reservations.Add(new Reservation(message.OrderId, item.Sku, item.Quantity));
         }
 
+        ctx.OutboxMessages.Add(new OutboxMessage
+        {
+            Id = Uuid.NewSequential(),
+            MessageType = MessagingQueues.InventoryReserved,
+            Payload = JsonSerializer.Serialize(new InventoryReserved(message.OrderId)),
+            Status = OutboxStatus.Pending,
+            OccurredAt = DateTime.UtcNow
+        });
+
         await ctx.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
-        // TODO: outbox success
         logger.LogInformation("Inventory reserved for order {OrderId}", message.OrderId);
     }
 }
