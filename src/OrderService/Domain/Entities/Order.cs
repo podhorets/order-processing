@@ -13,7 +13,7 @@ public class Order : AuditableEntity
     public decimal DiscountApplied { get; private set; }
     public OrderStatus Status { get; private set; }
     public string? RejectionReason { get; private set; }
-    public DateTimeOffset? ProcessedAt { get; private set; }
+    public DateTime? ProcessedAt { get; private set; }
 
     private readonly List<OrderItem> _items = [];
     public IReadOnlyList<OrderItem> Items => _items.AsReadOnly();
@@ -61,7 +61,7 @@ public class Order : AuditableEntity
             throw new InvalidOperationException($"Cannot transition from {Status} to Processed");
 
         Status = OrderStatus.Processed;
-        ProcessedAt = DateTimeOffset.UtcNow;
+        ProcessedAt = DateTime.UtcNow;
     }
 
     public void Reject(string reason)

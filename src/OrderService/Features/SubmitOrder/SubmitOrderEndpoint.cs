@@ -1,9 +1,14 @@
+using System.Text.Json;
 using FluentValidation;
 using OrderService.Domain.Entities;
+using OrderService.Domain.Enums;
 using OrderService.Domain.ValueObjects;
 using OrderService.Infrastructure.Extensions;
+using OrderService.Infrastructure.Messaging;
 using OrderService.Infrastructure.Persistence;
+using Shared.Contracts.Dto.V1;
 using Shared.Contracts.Events.V1;
+using UUIDNext;
 
 namespace OrderService.Features.SubmitOrder;
 
@@ -14,19 +19,7 @@ public sealed class SubmitOrderEndpoint : IEndpoint
             .WithName("SubmitOrder")
             .Produces(StatusCodes.Status202Accepted)
             .Produces(StatusCodes.Status400BadRequest);
-    
-    /// <summary>
-    /// Submits a new order and enqueues the <see cref="OrderSubmitted"/> event atomically.
-    /// </summary>
-    /// <remarks>
-    /// Uses the transactional outbox pattern. The event is stored in the database
-    /// within the same transaction as the order and published to RabbitMQ after commit,
-    /// ensuring consistency between data and messages.
-    /// </remarks>
-    /// <returns>
-    /// 202 Accepted — order created and processing started.<br/>
-    /// 400 Bad Request — invalid input.
-    /// </returns>
+
     private static async Task<IResult> Handle(
         SubmitOrderRequest request,
         IValidator<SubmitOrderRequest> validator,
@@ -36,15 +29,22 @@ public sealed class SubmitOrderEndpoint : IEndpoint
         var validation = await validator.ValidateAsync(request, ct);
         if (!validation.IsValid)
             return Results.ValidationProblem(validation.ToDictionary());
-        
+
         var orderItems = request.OrderItems.Select(i => new OrderItemDraft(i.Sku, i.Quantity, i.UnitPrice)).ToList();
         var order = Order.Submit(request.CustomerId, orderItems);
-        
+
+        var outboxItems = order.Items.Select(i => new OrderItemDto(i.Sku, i.Quantity, i.UnitPrice)).ToList();
+        var outboxMessage = new OutboxMessage
+        {
+            Id = Uuid.NewSequential(),
+            MessageType = MessagingQueues.OrderSubmitted,
+            Payload = JsonSerializer.Serialize(new OrderSubmitted(order.Id, order.CustomerId, outboxItems)),
+            Status = OutboxStatus.Pending,
+            OccurredAt = DateTime.UtcNow
+        };
+
         ctx.Orders.Add(order);
-
-        // TODO: publish order created event in the atomic transaction
-        // await publish.Publish();
-
+        ctx.OutboxMessages.Add(outboxMessage);
         await ctx.SaveChangesAsync(ct);
 
         return Results.Accepted(
