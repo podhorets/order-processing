@@ -8,8 +8,11 @@ services:
     depends_on:
       order-db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       - ConnectionStrings__Database=Host=order-db;Port=5432;Database=order;Username=order_user;Password=order_pw
+      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
       - ASPNETCORE_ENVIRONMENT=Development
     networks:
       - backend
@@ -22,8 +25,11 @@ services:
     depends_on:
       inventory-db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       - ConnectionStrings__Database=Host=inventory-db;Port=5432;Database=inventory;Username=inventory_user;Password=inventory_pw
+      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
       - ASPNETCORE_ENVIRONMENT=Development
     networks:
       - backend
@@ -60,6 +66,23 @@ services:
       - inventory_pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U inventory_user -d inventory"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+        
+  rabbitmq:
+    image: rabbitmq:4.2-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
