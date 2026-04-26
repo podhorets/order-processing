@@ -44,7 +44,7 @@ services:
       POSTGRES_PASSWORD: order_pw
       POSTGRES_DB: order
     volumes:
-      - order_pgdata:/var/lib/postgresql/data
+      - order_pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U order_user -d order"]
       interval: 5s
@@ -63,7 +63,7 @@ services:
       POSTGRES_PASSWORD: inventory_pw
       POSTGRES_DB: inventory
     volumes:
-      - inventory_pgdata:/var/lib/postgresql/data
+      - inventory_pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U inventory_user -d inventory"]
       interval: 5s

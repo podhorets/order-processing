@@ -24,37 +24,26 @@ public sealed class RabbitMqPublisher(IConnectionFactory factory) : IAsyncDispos
                 publisherConfirmationsEnabled: true,
                 publisherConfirmationTrackingEnabled: true);
             _channel = await _connection.CreateChannelAsync(channelOpts, ct);
-            
-            foreach (var queue in new[]
-                     {
-                         MessagingQueues.OrderSubmitted, MessagingQueues.InventoryReleased,
-                         MessagingQueues.InventoryReserved, MessagingQueues.InventoryReservationFailed
-                     })
-            {
-                await _channel.QueueDeclareAsync(queue, durable: true, exclusive: false,
-                    autoDelete: false, cancellationToken: ct);
-            }
         }
         finally
         {
             _initLock.Release();
         }
     }
-    
+
     public async Task PublishAsync(string queueName, string payload, CancellationToken ct = default)
     {
-        var body = Encoding.UTF8.GetBytes(payload);
-        var props = new BasicProperties { DeliveryMode = DeliveryModes.Persistent };
-
         if (_channel is null)
-            throw new InvalidOperationException("Channel not initialized.");
+            throw new InvalidOperationException("Publisher not initialized. Call EnsureInitializedAsync first.");
+
+        var props = new BasicProperties { DeliveryMode = DeliveryModes.Persistent };
 
         await _channel.BasicPublishAsync(
             exchange: string.Empty,
             routingKey: queueName,
             mandatory: false,
             basicProperties: props,
-            body: body,
+            body: Encoding.UTF8.GetBytes(payload),
             cancellationToken: ct);
     }
 

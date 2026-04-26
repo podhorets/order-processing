@@ -13,7 +13,8 @@ public static class MessagingExtensions
         });
 
         services.AddSingleton<RabbitMqPublisher>();
-        
+        services.AddHostedService<RabbitMqInitializer>();
+
         return services;
     }
 }
