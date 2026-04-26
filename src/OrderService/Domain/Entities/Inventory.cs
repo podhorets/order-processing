@@ -33,4 +33,11 @@ public class Inventory : AuditableEntity
 
         Reserved += quantity;
     }
+
+    public void Fulfill(int quantity)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(quantity);
+        OnHand   -= quantity;
+        Reserved -= quantity;
+    }
 }

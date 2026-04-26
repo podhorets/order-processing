@@ -23,6 +23,8 @@ public static class MessagingExtensions
 
         services.AddScoped<OrderSubmittedHandler>();
         services.AddScoped<InventoryReservedHandler>();
+        services.AddScoped<PerformPaymentHandler>();
+        services.AddScoped<PaymentSuccessfulHandler>();
         services.AddScoped<InventoryReservationFailedHandler>();
 
         services.AddHostedService<RabbitMqConsumerService>();

@@ -1,7 +1,12 @@
+using System.Text.Json;
+using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
 using OrderService.Infrastructure.Messaging;
 using OrderService.Infrastructure.Persistence;
+using Shared.Contracts;
+using Shared.Contracts.Commands.V1;
 using Shared.Contracts.Events.V1;
+using UUIDNext;
 
 namespace OrderService.Features.ProcessOrder;
 
@@ -26,10 +31,17 @@ public sealed class InventoryReservedHandler(
             return;
         }
 
-        // TODO: send PerformPayment outbox message with customerId, orderId, TotalAmount
+        ctx.OutboxMessages.Add(new OutboxMessage
+        {
+            Id = Uuid.NewSequential(),
+            MessageType = MessagingQueues.PerformPayment,
+            Payload = JsonSerializer.Serialize(new PerformPayment(order.Id, order.CustomerId, order.TotalAmount)),
+            Status = OutboxStatus.Pending,
+            OccurredAt = DateTime.UtcNow
+        });
 
         await ctx.SaveChangesAsync(ct);
 
-        logger.LogInformation("Order {OrderId} processed", message.OrderId);
+        logger.LogInformation("PerformPayment outbox queued for order {OrderId}", message.OrderId);
     }
 }

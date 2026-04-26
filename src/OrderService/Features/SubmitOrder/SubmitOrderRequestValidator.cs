@@ -32,7 +32,7 @@ internal sealed class OrderItemDtoValidator : AbstractValidator<OrderItemDto>
             .WithMessage("Quantity must be greater than zero.");
 
         RuleFor(x => x.UnitPrice)
-            .GreaterThanOrEqualTo(0)
+            .GreaterThan(0)
             .WithMessage("Unit price must not be negative.");
     }
 }

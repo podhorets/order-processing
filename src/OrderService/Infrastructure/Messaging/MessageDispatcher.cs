@@ -3,6 +3,7 @@ using OrderService.Features.ProcessOrder;
 using OrderService.Features.RejectOrder;
 using OrderService.Features.ReserveInventory;
 using Shared.Contracts;
+using Shared.Contracts.Commands.V1;
 using Shared.Contracts.Events.V1;
 
 namespace OrderService.Infrastructure.Messaging;
@@ -25,6 +26,13 @@ public sealed class MessageDispatcher(IServiceScopeFactory scopeFactory) : IMess
                 await HandleAsync<InventoryReservationFailed, InventoryReservationFailedHandler>(json, ct);
                 break;
 
+            case MessagingQueues.PerformPayment:
+                await HandleAsync<PerformPayment, PerformPaymentHandler>(json, ct);
+                break;
+
+            case MessagingQueues.PaymentSuccessful:
+                await HandleAsync<PaymentSuccessful, PaymentSuccessfulHandler>(json, ct);
+                break;
 
             default:
                 throw new InvalidOperationException($"Unknown message type: '{messageType}'.");

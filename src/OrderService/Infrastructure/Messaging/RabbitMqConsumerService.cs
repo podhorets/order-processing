@@ -23,6 +23,8 @@ public sealed class RabbitMqConsumerService(
             MessagingQueues.OrderSubmitted,
             MessagingQueues.InventoryReserved,
             MessagingQueues.InventoryReservationFailed,
+            MessagingQueues.PerformPayment,
+            MessagingQueues.PaymentSuccessful,
             MessagingQueues.InventoryReleased
         };
 

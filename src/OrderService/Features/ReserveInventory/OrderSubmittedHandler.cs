@@ -17,6 +17,12 @@ public sealed class OrderSubmittedHandler(
 {
     public async Task HandleAsync(OrderSubmitted message, CancellationToken ct)
     {
+        var order = await ctx.Orders.FindAsync([message.OrderId], ct);
+        if (order is null)
+            throw new InvalidOperationException($"Order {message.OrderId} not found");
+
+        order.MarkProcessing();
+        
         var alreadyProcessed = await ctx.Reservations
             .AnyAsync(r => r.OrderId == message.OrderId, ct);
 
