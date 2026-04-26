@@ -1,5 +1,6 @@
 using OrderService.Domain.Common;
 using OrderService.Domain.Enums;
+using OrderService.Domain.ValueObjects;
 using UUIDNext;
 
 namespace OrderService.Domain.Entities;
@@ -15,16 +16,16 @@ public class Order : AuditableEntity
     public DateTimeOffset? ProcessedAt { get; private set; }
 
     private readonly List<OrderItem> _items = [];
-    public IReadOnlyList<OrderItem> Items => _items;
+    public IReadOnlyList<OrderItem> Items => _items.AsReadOnly();
 
     private Order() { }
     
-    public static Order Submit(Guid customerId, IReadOnlyList<OrderItemDto> items)
+    public static Order Submit(Guid customerId, IReadOnlyList<OrderItemDraft> items)
     {
         if (customerId == Guid.Empty)
             throw new ArgumentException("CustomerId must not be empty.", nameof(customerId));
         if (items.Count == 0)
-            throw new ArgumentException("Order must contain at least one item.", nameof(items));
+            throw new ArgumentException("CustomerId must not be empty.", nameof(items));
 
         var duplicates = items.GroupBy(l => l.Sku, StringComparer.OrdinalIgnoreCase)
             .Where(g => g.Count() > 1)
@@ -39,10 +40,10 @@ public class Order : AuditableEntity
             CustomerId = customerId,
             Status = OrderStatus.Pending
         };
-
-        foreach (var line in items)
-            order._items.Add(new OrderItem(line.Sku, line.Quantity, line.UnitPrice));
-
+        
+        foreach (var (sku, quantity, price) in items)
+            order._items.Add(new OrderItem(sku, quantity, price));
+        
         order.RecalculateTotalAmount();
         return order;
     }
