@@ -1,9 +1,12 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
 using OrderService.Infrastructure.Messaging;
 using OrderService.Infrastructure.Persistence;
+using Shared.Contracts;
 using Shared.Contracts.Events.V1;
+using UUIDNext;
 
 namespace OrderService.Features.ReserveInventory;
 
@@ -53,7 +56,15 @@ public sealed class OrderSubmittedHandler(
             if (failure is null) continue;
 
             await tx.RollbackAsync(ct);
-            // TODO: outbox failure
+            ctx.OutboxMessages.Add(new OutboxMessage
+            {
+                Id = Uuid.NewSequential(),
+                MessageType = MessagingQueues.InventoryReservationFailed,
+                Payload = JsonSerializer.Serialize(new InventoryReservationFailed(message.OrderId, failure)),
+                Status = OutboxStatus.Pending,
+                OccurredAt = DateTime.UtcNow
+            });
+            await ctx.SaveChangesAsync(ct);
             logger.LogWarning("Reservation failed for order {OrderId}: {Reason}",
                 message.OrderId, failure);
             return;

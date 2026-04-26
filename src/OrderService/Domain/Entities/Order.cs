@@ -69,6 +69,7 @@ public class Order : AuditableEntity
         if (Status is OrderStatus.Processed or OrderStatus.Rejected)
             throw new InvalidOperationException($"Cannot reject from terminal state {Status}");
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        
         Status = OrderStatus.Rejected;
         RejectionReason = reason;
     }

@@ -14,6 +14,7 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddBackgroundJobs(builder.Configuration);
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddScoped<AddInventoryHandler>();
 
 var app = builder.Build();
 

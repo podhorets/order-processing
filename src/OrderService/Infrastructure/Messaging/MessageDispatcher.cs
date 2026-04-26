@@ -1,4 +1,5 @@
 using System.Text.Json;
+using OrderService.Features.RejectOrder;
 using OrderService.Features.ReleaseInventory;
 using OrderService.Features.ReserveInventory;
 using Shared.Contracts;
@@ -15,6 +16,10 @@ public sealed class MessageDispatcher(IServiceScopeFactory scopeFactory) : IMess
         {
             case MessagingQueues.OrderSubmitted:
                 await HandleAsync<OrderSubmitted, OrderSubmittedHandler>(json, ct);
+                break;
+
+            case MessagingQueues.InventoryReservationFailed:
+                await HandleAsync<InventoryReservationFailed, InventoryReservationFailedHandler>(json, ct);
                 break;
 
             case MessagingQueues.InventoryReleased:
