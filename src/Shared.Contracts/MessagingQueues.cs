@@ -1,4 +1,4 @@
-namespace OrderService.Infrastructure.Messaging;
+namespace Shared.Contracts;
 
 public static class MessagingQueues
 {

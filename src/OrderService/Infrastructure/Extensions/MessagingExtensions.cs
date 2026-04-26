@@ -1,3 +1,5 @@
+using OrderService.Features.ReleaseInventory;
+using OrderService.Features.ReserveInventory;
 using OrderService.Infrastructure.Messaging;
 using RabbitMQ.Client;
 
@@ -14,6 +16,14 @@ public static class MessagingExtensions
 
         services.AddSingleton<RabbitMqPublisher>();
         services.AddHostedService<RabbitMqInitializer>();
+        
+        services.AddSingleton<RabbitMqPublisher>();
+        services.AddSingleton<IMessageDispatcher, MessageDispatcher>();
+
+        services.AddScoped<OrderSubmittedHandler>();
+        services.AddScoped<ReleaseInventoryHandler>();
+
+        services.AddHostedService<RabbitMqConsumerService>();
 
         return services;
     }

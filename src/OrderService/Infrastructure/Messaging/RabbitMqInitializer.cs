@@ -1,4 +1,5 @@
 using RabbitMQ.Client;
+using Shared.Contracts;
 
 namespace OrderService.Infrastructure.Messaging;
 
