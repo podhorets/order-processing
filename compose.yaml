@@ -17,23 +17,6 @@ services:
     networks:
       - backend
 
-  inventory-service:
-    build:
-      context: .
-      dockerfile: src/InventoryService/Dockerfile
-    image: inventory-service:latest
-    depends_on:
-      inventory-db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      - ConnectionStrings__Database=Host=inventory-db;Port=5432;Database=inventory;Username=inventory_user;Password=inventory_pw
-      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
-      - ASPNETCORE_ENVIRONMENT=Development
-    networks:
-      - backend
-
   order-db:
     image: postgres:18-alpine
     container_name: order-db
@@ -53,25 +36,6 @@ services:
     networks:
       - backend
 
-  inventory-db:
-    image: postgres:18-alpine
-    container_name: inventory-db
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_USER: inventory_user
-      POSTGRES_PASSWORD: inventory_pw
-      POSTGRES_DB: inventory
-    volumes:
-      - inventory_pgdata:/var/lib/postgresql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U inventory_user -d inventory"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend
-        
   rabbitmq:
     image: rabbitmq:4.2-management-alpine
     container_name: rabbitmq
