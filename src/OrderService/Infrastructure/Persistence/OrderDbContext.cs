@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OrderService.Domain.Common;
 using OrderService.Domain.Entities;
+using OrderService.Infrastructure.Messaging.Outbox;
 
 namespace OrderService.Infrastructure.Persistence;
 

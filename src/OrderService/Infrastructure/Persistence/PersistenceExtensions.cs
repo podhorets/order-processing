@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using OrderService.Infrastructure.Persistence;
 
-namespace OrderService.Infrastructure.Extensions;
+namespace OrderService.Infrastructure.Persistence;
 
 public static class PersistenceExtensions
 {

@@ -1,4 +1,4 @@
-namespace OrderService.Infrastructure.Messaging;
+namespace OrderService.Infrastructure.Messaging.Outbox;
 
 public sealed class OutBoxJobSettings
 {

@@ -1,4 +1,4 @@
-namespace OrderService.Infrastructure.Extensions;
+namespace OrderService.Infrastructure.Http;
 
 public interface IEndpoint
 {

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using OrderService.Infrastructure.Extensions;
+using OrderService.Infrastructure.Http;
 using OrderService.Infrastructure.Persistence;
 
 namespace OrderService.Features.GetOrder;
@@ -11,7 +11,7 @@ public sealed class GetOrderEndpoint : IEndpoint
             .WithName("GetOrder")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
-    
+
     private static async Task<IResult> Handle(
         Guid id,
         OrderDbContext ctx,
@@ -19,7 +19,7 @@ public sealed class GetOrderEndpoint : IEndpoint
     {
         if (id == Guid.Empty)
             return Results.BadRequest("OrderId must not be empty.");
-        
+
         var order = await ctx.Orders
             .AsNoTracking()
             .FirstOrDefaultAsync(o => o.Id == id, ct);

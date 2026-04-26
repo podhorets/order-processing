@@ -1,9 +1,9 @@
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.Extensions.Options;
-using OrderService.Infrastructure.Messaging;
+using OrderService.Infrastructure.Messaging.Outbox;
 
-namespace OrderService.Infrastructure.Extensions;
+namespace OrderService.Infrastructure.Messaging;
 
 public static class BackgroundJobExtensions
 {

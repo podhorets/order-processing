@@ -1,6 +1,4 @@
-using OrderService.Domain.Enums;
-
-namespace OrderService.Domain.Entities;
+namespace OrderService.Infrastructure.Messaging.Outbox;
 
 public sealed class OutboxMessage
 {

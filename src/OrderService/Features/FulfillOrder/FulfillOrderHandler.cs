@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using OrderService.Contracts.Events.V1;
 using OrderService.Domain.Enums;
 using OrderService.Infrastructure.Messaging;
 using OrderService.Infrastructure.Persistence;
-using Shared.Contracts.Events.V1;
 
-namespace OrderService.Features.ProcessOrder;
+namespace OrderService.Features.FulfillOrder;
 
-public sealed class PaymentSuccessfulHandler(
+public sealed class FulfillOrderHandler(
     OrderDbContext ctx,
-    ILogger<PaymentSuccessfulHandler> logger)
+    ILogger<FulfillOrderHandler> logger)
     : IMessageHandler<PaymentSuccessful>
 {
     public async Task HandleAsync(PaymentSuccessful message, CancellationToken ct)
@@ -49,8 +49,10 @@ public sealed class PaymentSuccessfulHandler(
         foreach (var reservation in reservations)
             if (inventories.TryGetValue(reservation.Sku, out var inv))
                 inv.Fulfill(reservation.Quantity);
-        
+
         order.MarkProcessed();
+        
+        ctx.Reservations.RemoveRange(reservations);
 
         await ctx.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);

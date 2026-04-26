@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using OrderService.Contracts.Events.V1;
 using OrderService.Domain.Enums;
 using OrderService.Infrastructure.Messaging;
 using OrderService.Infrastructure.Persistence;
-using Shared.Contracts.Events.V1;
 
 namespace OrderService.Features.RejectOrder;
 
-public sealed class InventoryReservationFailedHandler(
+public sealed class RejectOrderHandler(
     OrderDbContext ctx,
-    ILogger<InventoryReservationFailedHandler> logger)
+    ILogger<RejectOrderHandler> logger)
     : IMessageHandler<InventoryReservationFailed>
 {
     public async Task HandleAsync(InventoryReservationFailed message, CancellationToken ct)
@@ -21,7 +21,7 @@ public sealed class InventoryReservationFailedHandler(
             return;
         }
 
-        if (order.Status is OrderStatus.Rejected)
+        if (order.Status == OrderStatus.Rejected)
         {
             logger.LogInformation("Order {OrderId} already rejected, skipping", message.OrderId);
             return;

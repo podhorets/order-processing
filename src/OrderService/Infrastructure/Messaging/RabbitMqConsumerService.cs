@@ -1,7 +1,7 @@
 using System.Text;
+using OrderService.Contracts;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Shared.Contracts;
 
 namespace OrderService.Infrastructure.Messaging;
 

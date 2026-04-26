@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace OrderService.Infrastructure.Extensions;
+namespace OrderService.Infrastructure.Http;
 
 public static class EndpointExtensions
 {

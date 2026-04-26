@@ -1,18 +1,19 @@
 using System.Text.Json;
+using OrderService.Contracts;
+using OrderService.Contracts.Commands.V1;
+using OrderService.Contracts.Events.V1;
 using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
 using OrderService.Infrastructure.Messaging;
+using OrderService.Infrastructure.Messaging.Outbox;
 using OrderService.Infrastructure.Persistence;
-using Shared.Contracts;
-using Shared.Contracts.Commands.V1;
-using Shared.Contracts.Events.V1;
 using UUIDNext;
 
-namespace OrderService.Features.ProcessOrder;
+namespace OrderService.Features.InitiatePayment;
 
-public sealed class InventoryReservedHandler(
+public sealed class InitiatePaymentHandler(
     OrderDbContext ctx,
-    ILogger<InventoryReservedHandler> logger)
+    ILogger<InitiatePaymentHandler> logger)
     : IMessageHandler<InventoryReserved>
 {
     public async Task HandleAsync(InventoryReserved message, CancellationToken ct)

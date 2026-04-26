@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using OrderService.Domain.Enums;
 using OrderService.Infrastructure.Persistence;
 
-namespace OrderService.Infrastructure.Messaging;
+namespace OrderService.Infrastructure.Messaging.Outbox;
 
 public class ProcessOutboxMessagesJob(
     OrderDbContext ctx,
@@ -17,7 +16,7 @@ public class ProcessOutboxMessagesJob(
         await publisher.EnsureInitializedAsync(ct);
 
         await using var tx = await ctx.Database.BeginTransactionAsync(ct);
-        
+
         var messages = await ctx.OutboxMessages
             .FromSqlRaw("""
                         SELECT *
@@ -28,7 +27,7 @@ public class ProcessOutboxMessagesJob(
                         LIMIT {0}
                         """, settings.Value.BatchSize)
             .ToListAsync(ct);
-        
+
         if (messages.Count == 0) return;
 
         foreach (var msg in messages)
@@ -52,7 +51,7 @@ public class ProcessOutboxMessagesJob(
                     msg.Status = OutboxStatus.Failed;
                     msg.ProcessedAt = DateTime.UtcNow;
                     msg.Error = ex.ToString();
-                    
+
                     logger.LogCritical(
                         "Outbox message {Id} (type: {Type}) dead-lettered after {Retries} attempts. " +
                         "Manual intervention required.",
@@ -65,7 +64,7 @@ public class ProcessOutboxMessagesJob(
         await tx.CommitAsync(ct);
 
         var processed = messages.Count(m => m.Status == OutboxStatus.Processed);
-        var failed = messages.Count(m => m.Status == OutboxStatus.Failed);
+        var failed    = messages.Count(m => m.Status == OutboxStatus.Failed);
 
         logger.LogInformation(
             "Outbox batch completed. Processed: {Processed}, Failed: {Failed}, Total: {Total}",

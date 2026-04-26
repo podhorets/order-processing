@@ -1,5 +1,5 @@
+using OrderService.Contracts;
 using RabbitMQ.Client;
-using Shared.Contracts;
 
 namespace OrderService.Infrastructure.Messaging;
 
@@ -29,8 +29,8 @@ public sealed class RabbitMqInitializer(IConnectionFactory factory) : IHostedSer
                 autoDelete: false,
                 arguments: new Dictionary<string, object?>
                 {
-                    ["x-dead-letter-exchange"]     = DeadLetterExchange,
-                    ["x-dead-letter-routing-key"]  = queue
+                    ["x-dead-letter-exchange"]    = DeadLetterExchange,
+                    ["x-dead-letter-routing-key"] = queue
                 },
                 cancellationToken: ct);
         }

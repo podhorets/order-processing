@@ -1,25 +1,24 @@
 using System.Text.Json;
+using OrderService.Contracts;
+using OrderService.Contracts.Commands.V1;
+using OrderService.Contracts.Events.V1;
 using OrderService.Domain.Entities;
-using OrderService.Domain.Enums;
 using OrderService.Infrastructure.Messaging;
+using OrderService.Infrastructure.Messaging.Outbox;
 using OrderService.Infrastructure.Persistence;
-using Shared.Contracts;
-using Shared.Contracts.Commands.V1;
-using Shared.Contracts.Events.V1;
 using UUIDNext;
 
-namespace OrderService.Features.ProcessOrder;
+namespace OrderService.Features.ProcessPayment;
 
-public sealed class PerformPaymentHandler(
+public sealed class ProcessPaymentHandler(
     OrderDbContext ctx,
-    ILogger<PerformPaymentHandler> logger)
+    ILogger<ProcessPaymentHandler> logger)
     : IMessageHandler<PerformPayment>
 {
     public async Task HandleAsync(PerformPayment message, CancellationToken ct)
     {
-        // here we mock payment and handle only happy path
-        // in case the payment was not successful, we would send PaymentFailed event
-        // PaymentFailed event would remove inventory reservation and set Order status to rejected with approtiate error msg
+        // Mock: happy path only.
+        // On real failure: publish PaymentFailed, release reservation, reject order.
         ctx.OutboxMessages.Add(new OutboxMessage
         {
             Id = Uuid.NewSequential(),

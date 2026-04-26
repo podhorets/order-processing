@@ -2,7 +2,8 @@ using FluentValidation;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Domain.Entities;
-using OrderService.Infrastructure.Extensions;
+using OrderService.Infrastructure.Http;
+using OrderService.Infrastructure.Messaging;
 using OrderService.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -1,18 +1,18 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using OrderService.Contracts.Events.V1;
 using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
 using OrderService.Infrastructure.Messaging;
+using OrderService.Infrastructure.Messaging.Outbox;
 using OrderService.Infrastructure.Persistence;
-using Shared.Contracts;
-using Shared.Contracts.Events.V1;
 using UUIDNext;
 
 namespace OrderService.Features.ReserveInventory;
 
-public sealed class OrderSubmittedHandler(
+public sealed class ReserveInventoryHandler(
     OrderDbContext ctx,
-    ILogger<OrderSubmittedHandler> logger)
+    ILogger<ReserveInventoryHandler> logger)
     : IMessageHandler<OrderSubmitted>
 {
     public async Task HandleAsync(OrderSubmitted message, CancellationToken ct)
@@ -20,7 +20,7 @@ public sealed class OrderSubmittedHandler(
         var order = await ctx.Orders.FindAsync([message.OrderId], ct);
         if (order is null)
             throw new InvalidOperationException($"Order {message.OrderId} not found");
-
+        
         order.MarkProcessing();
         
         var alreadyProcessed = await ctx.Reservations
@@ -71,8 +71,7 @@ public sealed class OrderSubmittedHandler(
                 OccurredAt = DateTime.UtcNow
             });
             await ctx.SaveChangesAsync(ct);
-            logger.LogWarning("Reservation failed for order {OrderId}: {Reason}",
-                message.OrderId, failure);
+            logger.LogWarning("Reservation failed for order {OrderId}: {Reason}", message.OrderId, failure);
             return;
         }
 

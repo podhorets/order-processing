@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using OrderService.Domain.Entities;
+using OrderService.Infrastructure.Messaging.Outbox;
 
 namespace OrderService.Infrastructure.Persistence.Configurations;
 

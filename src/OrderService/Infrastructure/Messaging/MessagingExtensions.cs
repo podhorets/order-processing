@@ -1,10 +1,11 @@
-using OrderService.Features.ProcessOrder;
+using OrderService.Features.FulfillOrder;
+using OrderService.Features.InitiatePayment;
+using OrderService.Features.ProcessPayment;
 using OrderService.Features.RejectOrder;
 using OrderService.Features.ReserveInventory;
-using OrderService.Infrastructure.Messaging;
 using RabbitMQ.Client;
 
-namespace OrderService.Infrastructure.Extensions;
+namespace OrderService.Infrastructure.Messaging;
 
 public static class MessagingExtensions
 {
@@ -16,18 +17,16 @@ public static class MessagingExtensions
         });
 
         services.AddSingleton<RabbitMqPublisher>();
-        services.AddHostedService<RabbitMqInitializer>();
-        
-        services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<IMessageDispatcher, MessageDispatcher>();
 
-        services.AddScoped<OrderSubmittedHandler>();
-        services.AddScoped<InventoryReservedHandler>();
-        services.AddScoped<PerformPaymentHandler>();
-        services.AddScoped<PaymentSuccessfulHandler>();
-        services.AddScoped<InventoryReservationFailedHandler>();
-
+        services.AddHostedService<RabbitMqInitializer>();
         services.AddHostedService<RabbitMqConsumerService>();
+
+        services.AddScoped<ReserveInventoryHandler>();
+        services.AddScoped<InitiatePaymentHandler>();
+        services.AddScoped<ProcessPaymentHandler>();
+        services.AddScoped<FulfillOrderHandler>();
+        services.AddScoped<RejectOrderHandler>();
 
         return services;
     }

@@ -1,4 +1,4 @@
-namespace OrderService.Domain.Enums;
+namespace OrderService.Infrastructure.Messaging.Outbox;
 
 public enum OutboxStatus
 {

@@ -1,10 +1,12 @@
 using System.Text.Json;
-using OrderService.Features.ProcessOrder;
+using OrderService.Contracts;
+using OrderService.Contracts.Commands.V1;
+using OrderService.Contracts.Events.V1;
+using OrderService.Features.FulfillOrder;
+using OrderService.Features.InitiatePayment;
+using OrderService.Features.ProcessPayment;
 using OrderService.Features.RejectOrder;
 using OrderService.Features.ReserveInventory;
-using Shared.Contracts;
-using Shared.Contracts.Commands.V1;
-using Shared.Contracts.Events.V1;
 
 namespace OrderService.Infrastructure.Messaging;
 
@@ -15,23 +17,23 @@ public sealed class MessageDispatcher(IServiceScopeFactory scopeFactory) : IMess
         switch (messageType)
         {
             case MessagingQueues.OrderSubmitted:
-                await HandleAsync<OrderSubmitted, OrderSubmittedHandler>(json, ct);
+                await HandleAsync<OrderSubmitted, ReserveInventoryHandler>(json, ct);
                 break;
 
             case MessagingQueues.InventoryReserved:
-                await HandleAsync<InventoryReserved, InventoryReservedHandler>(json, ct);
+                await HandleAsync<InventoryReserved, InitiatePaymentHandler>(json, ct);
                 break;
 
             case MessagingQueues.InventoryReservationFailed:
-                await HandleAsync<InventoryReservationFailed, InventoryReservationFailedHandler>(json, ct);
+                await HandleAsync<InventoryReservationFailed, RejectOrderHandler>(json, ct);
                 break;
 
             case MessagingQueues.PerformPayment:
-                await HandleAsync<PerformPayment, PerformPaymentHandler>(json, ct);
+                await HandleAsync<PerformPayment, ProcessPaymentHandler>(json, ct);
                 break;
 
             case MessagingQueues.PaymentSuccessful:
-                await HandleAsync<PaymentSuccessful, PaymentSuccessfulHandler>(json, ct);
+                await HandleAsync<PaymentSuccessful, FulfillOrderHandler>(json, ct);
                 break;
 
             default:
