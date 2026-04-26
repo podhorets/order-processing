@@ -1,7 +1,7 @@
-using InventoryService.Domain.Common;
+using OrderService.Domain.Common;
 using UUIDNext;
 
-namespace InventoryService.Domain.Entities;
+namespace OrderService.Domain.Entities;
 
 public class Inventory : AuditableEntity
 {
@@ -18,10 +18,19 @@ public class Inventory : AuditableEntity
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sku);
         ArgumentOutOfRangeException.ThrowIfNegative(onHand);
-        
+
         Id = Uuid.NewSequential();
         Sku = sku;
         OnHand = onHand;
         Reserved = 0;
+    }
+
+    public void Reserve(int quantity)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(quantity);
+        if (Available < quantity)
+            throw new InvalidOperationException($"Insufficient stock for {Sku}.");
+
+        Reserved += quantity;
     }
 }

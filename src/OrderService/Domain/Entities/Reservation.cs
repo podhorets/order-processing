@@ -1,8 +1,8 @@
-using InventoryService.Domain.Common;
-using InventoryService.Domain.Enums;
+using OrderService.Domain.Common;
+using OrderService.Domain.Enums;
 using UUIDNext;
 
-namespace InventoryService.Domain.Entities;
+namespace OrderService.Domain.Entities;
 
 public class Reservation : AuditableEntity
 {

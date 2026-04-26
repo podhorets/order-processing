@@ -1,8 +1,8 @@
-using InventoryService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OrderService.Domain.Entities;
 
-namespace InventoryService.Infrastructure.Persistence.Configurations;
+namespace OrderService.Infrastructure.Persistence.Configurations;
 
 public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
 {

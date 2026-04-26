@@ -1,8 +1,8 @@
-using InventoryService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OrderService.Domain.Entities;
 
-namespace InventoryService.Infrastructure.Persistence.Configurations;
+namespace OrderService.Infrastructure.Persistence.Configurations;
 
 public class InventoryConfiguration : IEntityTypeConfiguration<Inventory>
 {
@@ -18,8 +18,6 @@ public class InventoryConfiguration : IEntityTypeConfiguration<Inventory>
         builder.Property(i => i.Sku).HasMaxLength(100).IsRequired();
         builder.Property(i => i.OnHand).IsRequired();
         builder.Property(x => x.Reserved).IsRequired().HasDefaultValue(0);
-
-        builder.Ignore(x => x.Available); 
         
         builder.HasIndex(x => x.Sku).IsUnique();
 
