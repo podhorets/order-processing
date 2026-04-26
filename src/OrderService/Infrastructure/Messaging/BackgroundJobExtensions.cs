@@ -1,34 +1,18 @@
-using Hangfire;
-using Hangfire.PostgreSql;
-using Microsoft.Extensions.Options;
 using OrderService.Infrastructure.Messaging.Outbox;
 
 namespace OrderService.Infrastructure.Messaging;
 
-public static class BackgroundJobExtensions
+public static class OutboxExtensions
 {
-    public static void AddBackgroundJobs(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddOutbox(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<OutBoxJobSettings>(configuration.GetSection("BackgroundJobs:Outbox"));
+        services.Configure<OutboxSettings>(configuration.GetSection("Outbox"));
 
-        services.AddHangfire(config =>
-            config.UsePostgreSqlStorage(options =>
-                options.UseNpgsqlConnection(configuration.GetConnectionString("Database"))));
+        services.AddSingleton<OutboxChannel>();
+        services.AddSingleton<OutboxSignalingInterceptor>();
+        services.AddScoped<OutboxProcessor>();
+        services.AddHostedService<OutboxProcessorService>();
 
-        services.AddHangfireServer();
-
-        services.AddScoped<IProcessOutboxMessagesJob, ProcessOutboxMessagesJob>();
-    }
-
-    public static IApplicationBuilder UseBackgroundJobs(this WebApplication app)
-    {
-        app.Services
-            .GetRequiredService<IRecurringJobManager>()
-            .AddOrUpdate<IProcessOutboxMessagesJob>(
-                "outbox-processor",
-                job => job.ProcessAsync(CancellationToken.None),
-                app.Services.GetRequiredService<IOptions<OutBoxJobSettings>>().Value.Schedule);
-
-        return app;
+        return services;
     }
 }

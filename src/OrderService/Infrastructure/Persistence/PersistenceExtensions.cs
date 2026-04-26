@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OrderService.Infrastructure.Messaging.Outbox;
 
 namespace OrderService.Infrastructure.Persistence;
 
@@ -6,8 +7,11 @@ public static class PersistenceExtensions
 {
     public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration config)
     {
-        services.AddDbContext<OrderDbContext>(opts =>
-            opts.UseNpgsql(config.GetConnectionString("Database")));
+        services.AddDbContext<OrderDbContext>((sp, opts) =>
+        {
+            opts.UseNpgsql(config.GetConnectionString("Database"));
+            opts.AddInterceptors(sp.GetRequiredService<OutboxSignalingInterceptor>());
+        });
         return services;
     }
 

@@ -1,5 +1,4 @@
 using FluentValidation;
-using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Domain.Entities;
 using OrderService.Infrastructure.Http;
@@ -13,7 +12,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
-builder.Services.AddBackgroundJobs(builder.Configuration);
+builder.Services.AddOutbox(builder.Configuration);
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddScoped<AddInventoryHandler>();
 
@@ -23,18 +22,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseHangfireDashboard(options: new DashboardOptions
-    {
-        Authorization = []
-    });
     app.ApplyMigrations();
 }
 
 app.MapHealthChecks("/health");
 app.MapEndpoints();
 app.MapPost("/inventories", (AddInventory inventory, [FromServices] AddInventoryHandler handler, CancellationToken ct) => handler.Handle(inventory, ct));
-
-app.UseBackgroundJobs();
 
 app.Run();
 

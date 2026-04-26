@@ -4,14 +4,13 @@ using OrderService.Infrastructure.Persistence;
 
 namespace OrderService.Infrastructure.Messaging.Outbox;
 
-public class ProcessOutboxMessagesJob(
+public sealed class OutboxProcessor(
     OrderDbContext ctx,
     RabbitMqPublisher publisher,
-    ILogger<ProcessOutboxMessagesJob> logger,
-    IOptions<OutBoxJobSettings> settings)
-    : IProcessOutboxMessagesJob
+    IOptions<OutboxSettings> settings,
+    ILogger<OutboxProcessor> logger)
 {
-    public async Task ProcessAsync(CancellationToken ct)
+    public async Task ProcessBatchAsync(CancellationToken ct)
     {
         await publisher.EnsureInitializedAsync(ct);
 
@@ -19,13 +18,13 @@ public class ProcessOutboxMessagesJob(
 
         var messages = await ctx.OutboxMessages
             .FromSqlRaw("""
-                        SELECT *
-                        FROM "OutboxMessages"
-                        WHERE "Status" = 'Pending'
-                        ORDER BY "OccurredAt"
-                        FOR UPDATE SKIP LOCKED
-                        LIMIT {0}
-                        """, settings.Value.BatchSize)
+                SELECT *
+                FROM "OutboxMessages"
+                WHERE "Status" = 'Pending'
+                ORDER BY "OccurredAt"
+                FOR UPDATE SKIP LOCKED
+                LIMIT {0}
+                """, settings.Value.BatchSize)
             .ToListAsync(ct);
 
         if (messages.Count == 0) return;
