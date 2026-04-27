@@ -3,5 +3,4 @@
     <File Path="compose.yaml" />
   </Folder>
   <Project Path="src/OrderService/OrderService.csproj" />
-  <Project Path="src/Shared.Contracts/Shared.Contracts.csproj" />
 </Solution>
