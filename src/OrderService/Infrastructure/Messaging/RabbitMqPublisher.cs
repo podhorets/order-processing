@@ -31,12 +31,16 @@ public sealed class RabbitMqPublisher(IConnectionFactory factory) : IAsyncDispos
         }
     }
 
-    public async Task PublishAsync(string queueName, string payload, CancellationToken ct = default)
+    public async Task PublishAsync(string queueName, string payload, Guid messageId, CancellationToken ct = default)
     {
         if (_channel is null)
             throw new InvalidOperationException("Publisher not initialized. Call EnsureInitializedAsync first.");
 
-        var props = new BasicProperties { DeliveryMode = DeliveryModes.Persistent };
+        var props = new BasicProperties
+        {
+            DeliveryMode = DeliveryModes.Persistent,
+            MessageId = messageId.ToString()
+        };
 
         await _channel.BasicPublishAsync(
             exchange: string.Empty,

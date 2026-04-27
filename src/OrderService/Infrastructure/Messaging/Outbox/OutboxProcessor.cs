@@ -33,7 +33,7 @@ public sealed class OutboxProcessor(
         {
             try
             {
-                await publisher.PublishAsync(msg.MessageType, msg.Payload, ct);
+                await publisher.PublishAsync(msg.MessageType, msg.Payload, msg.Id, ct);
                 msg.Status = OutboxStatus.Processed;
                 msg.ProcessedAt = DateTime.UtcNow;
             }

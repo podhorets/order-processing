@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OrderService.Domain.Common;
 using OrderService.Domain.Entities;
+using OrderService.Infrastructure.Messaging.Inbox;
 using OrderService.Infrastructure.Messaging.Outbox;
 
 namespace OrderService.Infrastructure.Persistence;
@@ -13,6 +14,7 @@ public class OrderDbContext(
     public DbSet<Inventory> Inventories => Set<Inventory>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
         => modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrderDbContext).Assembly);

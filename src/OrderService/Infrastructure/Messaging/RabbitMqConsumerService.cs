@@ -40,7 +40,8 @@ public sealed class RabbitMqConsumerService(
                 try
                 {
                     var json = Encoding.UTF8.GetString(ea.Body.ToArray());
-                    await dispatcher.DispatchAsync(queue, json, ct);
+                    var messageId = ea.BasicProperties.MessageId ?? ea.DeliveryTag.ToString();
+                    await dispatcher.DispatchAsync(queue, json, messageId, ct);
                     await _channel.BasicAckAsync(ea.DeliveryTag, false, ct);
                 }
                 catch (Exception ex)
