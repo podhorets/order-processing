@@ -3,10 +3,17 @@ using Microsoft.AspNetCore.Mvc;
 using OrderService.Domain.Entities;
 using OrderService.Infrastructure.Http;
 using OrderService.Infrastructure.Messaging;
+using OrderService.Infrastructure.Observability;
 using OrderService.Infrastructure.Persistence;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog((ctx, config) =>
+    config.ReadFrom.Configuration(ctx.Configuration));
+
+builder.Services.AddMetrics();
+builder.Services.AddSingleton<OrderMetrics>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();

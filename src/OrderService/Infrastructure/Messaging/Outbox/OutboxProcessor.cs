@@ -61,12 +61,5 @@ public sealed class OutboxProcessor(
 
         await ctx.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
-
-        var processed = messages.Count(m => m.Status == OutboxStatus.Processed);
-        var failed    = messages.Count(m => m.Status == OutboxStatus.Failed);
-
-        logger.LogInformation(
-            "Outbox batch completed. Processed: {Processed}, Failed: {Failed}, Total: {Total}",
-            processed, failed, messages.Count);
     }
 }

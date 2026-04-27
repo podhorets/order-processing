@@ -2,12 +2,14 @@ using Microsoft.EntityFrameworkCore;
 using OrderService.Contracts.Events.V1;
 using OrderService.Domain.Enums;
 using OrderService.Infrastructure.Messaging;
+using OrderService.Infrastructure.Observability;
 using OrderService.Infrastructure.Persistence;
 
 namespace OrderService.Features.FulfillOrder;
 
 public sealed class FulfillOrderHandler(
     OrderDbContext ctx,
+    OrderMetrics metrics,
     ILogger<FulfillOrderHandler> logger)
     : IMessageHandler<PaymentSuccessful>
 {
@@ -57,6 +59,7 @@ public sealed class FulfillOrderHandler(
         await ctx.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
-        logger.LogInformation("Order {OrderId} processed after successful payment", message.OrderId);
+        metrics.OrderProcessed();
+        logger.LogInformation("Order {OrderId} fulfilled", message.OrderId);
     }
 }
