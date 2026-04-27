@@ -9,6 +9,7 @@ public sealed class GetOrderEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder app)
         => app.MapGet("/api/v1/orders/{id:guid}", Handle)
             .WithName("GetOrder")
+            .WithTags("Orders")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
 

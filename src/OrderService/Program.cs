@@ -1,7 +1,5 @@
 using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry.Metrics;
-using OrderService.Domain.Entities;
 using OrderService.Infrastructure.Http;
 using OrderService.Infrastructure.Messaging;
 using OrderService.Infrastructure.Observability;
@@ -28,7 +26,6 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddOutbox(builder.Configuration);
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-builder.Services.AddScoped<AddInventoryHandler>();
 
 var app = builder.Build();
 
@@ -43,19 +40,5 @@ app.UseExceptionHandler();
 app.MapPrometheusScrapingEndpoint();
 app.MapHealthChecks("/health");
 app.MapEndpoints();
-app.MapPost("/inventories", (AddInventory inventory, [FromServices] AddInventoryHandler handler, CancellationToken ct) => handler.Handle(inventory, ct));
 
 app.Run();
-
-public sealed record AddInventory(string Sku, int OnHand);
-
-public class AddInventoryHandler(OrderDbContext ctx)
-{
-    public async Task<IResult> Handle(AddInventory request, CancellationToken cancellationToken)
-    {
-        var inventory = new Inventory(request.Sku, request.OnHand);
-        ctx.Inventories.Add(inventory);
-        await ctx.SaveChangesAsync(cancellationToken);
-        return Results.Created($"/inventories/{inventory.Id}", new { inventory.Id });
-    }
-}

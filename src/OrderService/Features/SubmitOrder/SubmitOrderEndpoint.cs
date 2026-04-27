@@ -17,6 +17,7 @@ public sealed class SubmitOrderEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder app)
         => app.MapPost("/api/v1/orders", Handle)
             .WithName("SubmitOrder")
+            .WithTags("Orders")
             .Produces(StatusCodes.Status202Accepted)
             .Produces(StatusCodes.Status400BadRequest);
 
