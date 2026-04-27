@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using OpenTelemetry.Metrics;
 using OrderService.Domain.Entities;
 using OrderService.Infrastructure.Http;
 using OrderService.Infrastructure.Messaging;
@@ -12,7 +13,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((ctx, config) =>
     config.ReadFrom.Configuration(ctx.Configuration));
 
-builder.Services.AddMetrics();
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics => metrics
+        .AddMeter("OrderService")
+        .AddPrometheusExporter());
+
 builder.Services.AddSingleton<OrderMetrics>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -32,6 +37,7 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigrations();
 }
 
+app.MapPrometheusScrapingEndpoint();
 app.MapHealthChecks("/health");
 app.MapEndpoints();
 app.MapPost("/inventories", (AddInventory inventory, [FromServices] AddInventoryHandler handler, CancellationToken ct) => handler.Handle(inventory, ct));
