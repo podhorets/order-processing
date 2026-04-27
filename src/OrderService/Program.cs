@@ -19,6 +19,8 @@ builder.Services.AddOpenTelemetry()
         .AddPrometheusExporter());
 
 builder.Services.AddSingleton<OrderMetrics>();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
@@ -37,6 +39,7 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigrations();
 }
 
+app.UseExceptionHandler();
 app.MapPrometheusScrapingEndpoint();
 app.MapHealthChecks("/health");
 app.MapEndpoints();
