@@ -33,8 +33,6 @@ public sealed class ReserveInventoryHandler(
         }
 
         var items = message.OrderItems
-            .GroupBy(i => i.Sku)
-            .Select(g => new { Sku = g.Key, Quantity = g.Sum(i => i.Quantity) })
             .OrderBy(i => i.Sku)
             .ToArray();
 
