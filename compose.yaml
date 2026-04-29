@@ -8,12 +8,16 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      order-db:       { condition: service_healthy }
-      rabbitmq:       { condition: service_healthy }
+      order-db:  { condition: service_healthy }
+      rabbitmq:  { condition: service_healthy }
     environment:
       ConnectionStrings__Database: "Host=order-db;Port=5432;Database=orders;Username=app;Password=app"
       ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672"
       ASPNETCORE_ENVIRONMENT: Development
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "order-service"
+      OTEL_METRIC_EXPORT_INTERVAL: "10000"
     networks: [backend]
     labels:
       dev.orbstack.http-port: "8080"
@@ -26,12 +30,16 @@ services:
     ports:
       - "8081:8080"
     depends_on:
-      inventory-db:   { condition: service_healthy }
-      rabbitmq:       { condition: service_healthy }
+      inventory-db: { condition: service_healthy }
+      rabbitmq:     { condition: service_healthy }
     environment:
       ConnectionStrings__Database: "Host=inventory-db;Port=5432;Database=inventory;Username=app;Password=app"
       ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672"
       ASPNETCORE_ENVIRONMENT: Development
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "inventory-service"
+      OTEL_METRIC_EXPORT_INTERVAL: "10000"
     networks: [backend]
 
   payment-service:
@@ -42,19 +50,39 @@ services:
     ports:
       - "8082:8080"
     depends_on:
-      payment-db:     { condition: service_healthy }
-      rabbitmq:       { condition: service_healthy }
+      payment-db: { condition: service_healthy }
+      rabbitmq:   { condition: service_healthy }
     environment:
       ConnectionStrings__Database: "Host=payment-db;Port=5432;Database=payments;Username=app;Password=app"
       ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672"
       ASPNETCORE_ENVIRONMENT: Development
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "payment-service"
+      OTEL_METRIC_EXPORT_INTERVAL: "10000"
     networks: [backend]
+
+  # ── Observability ─────────────────────────────────────────────────────────────
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "18888:18888"  # UI
+      - "18889:18889"  # OTLP gRPC
+    networks: [backend]
+    labels:
+      dev.orbstack.http-port: "18888"
+
+  # ── Databases ─────────────────────────────────────────────────────────────────
 
   order-db:
     image: postgres:17-alpine
     container_name: order-db
     environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: orders }
     volumes: [order_pgdata:/var/lib/postgresql/data]
+    ports: ["5433:5432"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d orders"]
       interval: 5s
@@ -67,6 +95,7 @@ services:
     container_name: inventory-db
     environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: inventory }
     volumes: [inventory_pgdata:/var/lib/postgresql/data]
+    ports: ["5434:5432"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d inventory"]
       interval: 5s
@@ -79,6 +108,7 @@ services:
     container_name: payment-db
     environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: payments }
     volumes: [payment_pgdata:/var/lib/postgresql/data]
+    ports: ["5435:5432"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d payments"]
       interval: 5s

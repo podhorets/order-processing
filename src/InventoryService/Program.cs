@@ -7,6 +7,8 @@ using JasperFx.Core;
 using JasperFx.Resources;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
@@ -19,11 +21,19 @@ var config  = builder.Configuration;
 
 builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
-// ── Metrics ───────────────────────────────────────────────────────────────────
+// ── Observability: metrics + traces → OTel Collector → Prometheus / Tempo ─────
 builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("inventory-service"))
     .WithMetrics(m => m
         .AddMeter("InventoryService")
-        .AddPrometheusExporter());
+        .AddAspNetCoreInstrumentation()
+        .AddOtlpExporter())
+    .WithTracing(t => t
+        .AddSource("Wolverine")
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter());
 
 builder.Services.AddSingleton<InventoryMetrics>();
 
@@ -74,7 +84,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
-app.MapPrometheusScrapingEndpoint();
 app.MapHealthChecks("/health");
 app.MapEndpoints();
 

@@ -5,6 +5,8 @@ using JasperFx.Core;
 using JasperFx.Resources;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using OrderService.Infrastructure.Http;
 using OrderService.Infrastructure.Observability;
 using OrderService.Infrastructure.Persistence;
@@ -21,11 +23,19 @@ var config  = builder.Configuration;
 
 builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
-// ── Metrics ──────────────────────────────────────────────────────────────────
+// ── Observability: metrics + traces → OTel Collector → Prometheus / Tempo ─────
 builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("order-service"))
     .WithMetrics(m => m
         .AddMeter("OrderService")
-        .AddPrometheusExporter());
+        .AddAspNetCoreInstrumentation()
+        .AddOtlpExporter())
+    .WithTracing(t => t
+        .AddSource("Wolverine")
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter());
 
 builder.Services.AddSingleton<OrderMetrics>();
 
@@ -84,7 +94,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
-app.MapPrometheusScrapingEndpoint();
 app.MapHealthChecks("/health");
 app.MapEndpoints();
 
