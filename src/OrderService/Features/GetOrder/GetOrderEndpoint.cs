@@ -10,23 +10,24 @@ public sealed class GetOrderEndpoint : IEndpoint
         => app.MapGet("/api/v1/orders/{id:guid}", Handle)
             .WithName("GetOrder")
             .WithTags("Orders")
-            .Produces(StatusCodes.Status200OK)
+            .Produces<GetOrderResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
 
-    private static async Task<IResult> Handle(
-        Guid id,
-        OrderDbContext ctx,
-        CancellationToken ct)
+    private static async Task<IResult> Handle(Guid id, OrderDbContext ctx, CancellationToken ct)
     {
-        if (id == Guid.Empty)
-            return Results.BadRequest("OrderId must not be empty.");
-
-        var order = await ctx.Orders
+        var summary = await ctx.OrderSummaries
             .AsNoTracking()
-            .FirstOrDefaultAsync(o => o.Id == id, ct);
+            .FirstOrDefaultAsync(s => s.Id == id, ct);
 
-        return order is null
+        return summary is null
             ? Results.NotFound()
-            : Results.Ok(new GetOrderResponse(order.Id, order.CustomerId, order.Status.ToString(), order.TotalAmount));
+            : Results.Ok(new GetOrderResponse(
+                summary.Id,
+                summary.CustomerId,
+                summary.Status,
+                summary.TotalAmount,
+                summary.RejectionReason,
+                summary.CreatedAt,
+                summary.CompletedAt));
     }
 }

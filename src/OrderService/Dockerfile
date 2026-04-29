@@ -1,23 +1,13 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
-
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
+﻿FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+COPY ["src/Contracts/Contracts.csproj",       "src/Contracts/"]
 COPY ["src/OrderService/OrderService.csproj", "src/OrderService/"]
 RUN dotnet restore "src/OrderService/OrderService.csproj"
 COPY . .
-WORKDIR "/src/src/OrderService"
-RUN dotnet build "./OrderService.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet publish "src/OrderService/OrderService.csproj" -c Release -o /app/publish --no-restore
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./OrderService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
-COPY --from=publish /app/publish .
+EXPOSE 8080
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "OrderService.dll"]

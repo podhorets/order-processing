@@ -1,14 +1,10 @@
-using System.Text.Json;
+using Contracts.Dto;
 using FluentValidation;
-using OrderService.Contracts.Dto.V1;
-using OrderService.Contracts.Events.V1;
-using OrderService.Domain.Entities;
-using OrderService.Domain.ValueObjects;
 using OrderService.Infrastructure.Http;
-using OrderService.Infrastructure.Messaging;
-using OrderService.Infrastructure.Messaging.Outbox;
-using OrderService.Infrastructure.Persistence;
+using OrderService.Infrastructure.Observability;
+using OrderService.Saga;
 using UUIDNext;
+using Wolverine;
 
 namespace OrderService.Features.SubmitOrder;
 
@@ -24,31 +20,22 @@ public sealed class SubmitOrderEndpoint : IEndpoint
     private static async Task<IResult> Handle(
         SubmitOrderRequest request,
         IValidator<SubmitOrderRequest> validator,
-        OrderDbContext ctx,
+        IMessageBus bus,
+        OrderMetrics metrics,
         CancellationToken ct)
     {
         var validation = await validator.ValidateAsync(request, ct);
         if (!validation.IsValid)
             return Results.ValidationProblem(validation.ToDictionary());
 
-        var orderItems = request.OrderItems.Select(i => new OrderItemDraft(i.Sku, i.Quantity, i.UnitPrice)).ToList();
-        var order = Order.Submit(request.CustomerId, orderItems);
+        var orderId     = Uuid.NewSequential();
+        var totalAmount = request.Items.Sum(i => i.Quantity * i.UnitPrice);
+        var items       = request.Items.Select(i => new OrderItemDto(i.Sku, i.Quantity, i.UnitPrice)).ToList();
 
-        var outboxItems = order.Items.Select(i => new OrderItemDto(i.Sku, i.Quantity, i.UnitPrice)).ToList();
-        ctx.Orders.Add(order);
-        ctx.OutboxMessages.Add(new OutboxMessage
-        {
-            Id = Uuid.NewSequential(),
-            MessageType = MessagingQueues.OrderSubmitted,
-            Payload = JsonSerializer.Serialize(new OrderSubmitted(order.Id, order.CustomerId, outboxItems)),
-            Status = OutboxStatus.Pending,
-            OccurredAt = DateTime.UtcNow
-        });
+        await bus.SendAsync(new SubmitOrderCommand(orderId, request.CustomerId, totalAmount, items));
 
-        await ctx.SaveChangesAsync(ct);
+        metrics.OrderSubmitted();
 
-        return Results.Accepted(
-            $"/api/v1/orders/{order.Id}",
-            new SubmitOrderResponse(order.Id, order.Status.ToString()));
+        return Results.Accepted($"/api/v1/orders/{orderId}", new { OrderId = orderId });
     }
 }

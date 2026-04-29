@@ -8,59 +8,107 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      order-db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      order-db:       { condition: service_healthy }
+      rabbitmq:       { condition: service_healthy }
     environment:
-      - ConnectionStrings__Database=Host=order-db;Port=5432;Database=order;Username=order_user;Password=order_pw
-      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
-      - ASPNETCORE_ENVIRONMENT=Development
-    networks:
-      - backend
+      ConnectionStrings__Database: "Host=order-db;Port=5432;Database=orders;Username=app;Password=app"
+      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672"
+      ASPNETCORE_ENVIRONMENT: Development
+    networks: [backend]
+    labels:
+      dev.orbstack.http-port: "8080"
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: src/InventoryService/Dockerfile
+    image: inventory-service:latest
+    ports:
+      - "8081:8080"
+    depends_on:
+      inventory-db:   { condition: service_healthy }
+      rabbitmq:       { condition: service_healthy }
+    environment:
+      ConnectionStrings__Database: "Host=inventory-db;Port=5432;Database=inventory;Username=app;Password=app"
+      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672"
+      ASPNETCORE_ENVIRONMENT: Development
+    networks: [backend]
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: src/PaymentService/Dockerfile
+    image: payment-service:latest
+    ports:
+      - "8082:8080"
+    depends_on:
+      payment-db:     { condition: service_healthy }
+      rabbitmq:       { condition: service_healthy }
+    environment:
+      ConnectionStrings__Database: "Host=payment-db;Port=5432;Database=payments;Username=app;Password=app"
+      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672"
+      ASPNETCORE_ENVIRONMENT: Development
+    networks: [backend]
 
   order-db:
-    image: postgres:18-alpine
+    image: postgres:17-alpine
     container_name: order-db
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: order_user
-      POSTGRES_PASSWORD: order_pw
-      POSTGRES_DB: order
-    volumes:
-      - order_pgdata:/var/lib/postgresql
+    environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: orders }
+    volumes: [order_pgdata:/var/lib/postgresql/data]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U order_user -d order"]
+      test: ["CMD-SHELL", "pg_isready -U app -d orders"]
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - backend
+    networks: [backend]
+
+  inventory-db:
+    image: postgres:17-alpine
+    container_name: inventory-db
+    environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: inventory }
+    volumes: [inventory_pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d inventory"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks: [backend]
+
+  payment-db:
+    image: postgres:17-alpine
+    container_name: payment-db
+    environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: payments }
+    volumes: [payment_pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d payments"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks: [backend]
 
   rabbitmq:
-    image: rabbitmq:4.2-management-alpine
+    image: rabbitmq:4-management-alpine
     container_name: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
-    labels:
-      dev.orbstack.http-port: "15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity" ]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
       interval: 5s
       timeout: 10s
       retries: 10
       start_period: 30s
-    networks:
-      - backend
+    labels:
+      dev.orbstack.http-port: "15672"
+    networks: [backend]
 
 volumes:
   order_pgdata:
   inventory_pgdata:
+  payment_pgdata:
 
 networks:
   backend:

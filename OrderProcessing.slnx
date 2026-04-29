@@ -2,5 +2,8 @@
   <Folder Name="/Solution Items/">
     <File Path="compose.yaml" />
   </Folder>
+  <Project Path="src/Contracts/Contracts.csproj" />
   <Project Path="src/OrderService/OrderService.csproj" />
+  <Project Path="src/InventoryService/InventoryService.csproj" />
+  <Project Path="src/PaymentService/PaymentService.csproj" />
 </Solution>

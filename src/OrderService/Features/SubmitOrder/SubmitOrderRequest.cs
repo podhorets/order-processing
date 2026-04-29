@@ -1,5 +1,4 @@
-using OrderService.Contracts.Dto.V1;
-
 namespace OrderService.Features.SubmitOrder;
 
-public sealed record SubmitOrderRequest(Guid CustomerId, IReadOnlyList<OrderItemDto> OrderItems);
+public sealed record SubmitOrderRequest(Guid CustomerId, List<SubmitOrderItem> Items);
+public sealed record SubmitOrderItem(string Sku, int Quantity, decimal UnitPrice);

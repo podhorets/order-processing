@@ -1,14 +1,9 @@
-using System.Text.Json;
-using OrderService.Contracts;
-using OrderService.Contracts.Dto.V1;
-using OrderService.Contracts.Events.V1;
-using OrderService.Domain.Entities;
-using OrderService.Domain.ValueObjects;
+using Contracts.Commands;
+using Contracts.Dto;
 using OrderService.Infrastructure.Http;
-using OrderService.Infrastructure.Messaging;
-using OrderService.Infrastructure.Messaging.Outbox;
-using OrderService.Infrastructure.Persistence;
+using OrderService.Saga;
 using UUIDNext;
+using Wolverine;
 
 namespace OrderService.Features.CreateOrdersBatch;
 
@@ -33,37 +28,35 @@ public sealed class CreateOrdersBatchEndpoint : IEndpoint
             return Results.BadRequest("OrderAmount must be between 1 and 1000.");
 
         var batchId = Uuid.NewSequential();
-        var opts = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct };
+        var opts    = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct };
 
-        var customerIds = Enumerable.Range(0, request.OrderAmount)
-            .Select(_ => Uuid.NewSequential())
+        // Build order specs upfront so they can be chunked across parallel workers.
+        var orders = Enumerable.Range(0, request.OrderAmount)
+            .Select(_ => new
+            {
+                OrderId    = Uuid.NewSequential(),
+                CustomerId = Uuid.NewSequential(),
+                Sku        = $"B-{Uuid.NewSequential():N}"
+            })
             .ToList();
 
-        await Parallel.ForEachAsync(customerIds.Chunk(BatchSize), opts, async (chunk, token) =>
+        await Parallel.ForEachAsync(orders.Chunk(BatchSize), opts, async (chunk, token) =>
         {
             await using var scope = scopeFactory.CreateAsyncScope();
-            var ctx = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+            var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
-            foreach (var customerId in chunk)
+            foreach (var o in chunk)
             {
-                var sku = $"B-{Uuid.NewSequential():N}";
-
-                ctx.Inventories.Add(new Inventory(sku, 1));
-
-                var order = Order.Submit(customerId, [new OrderItemDraft(sku, 1, 9.99m)]);
-                ctx.Orders.Add(order);
-                ctx.OutboxMessages.Add(new OutboxMessage
-                {
-                    Id = Uuid.NewSequential(),
-                    MessageType = MessagingQueues.OrderSubmitted,
-                    Payload = JsonSerializer.Serialize(
-                        new OrderSubmitted(order.Id, customerId, [new OrderItemDto(sku, 1, 9.99m)])),
-                    Status = OutboxStatus.Pending,
-                    OccurredAt = DateTime.UtcNow
-                });
+                // AddInventoryCommand arrives at inventory-service queue BEFORE
+                // ReserveInventoryCommand (emitted by OrderSaga.Start from SubmitOrderCommand).
+                // Same queue = FIFO → inventory is guaranteed to exist at reservation time.
+                await bus.SendAsync(new AddInventoryCommand(o.Sku, 1));
+                await bus.SendAsync(new SubmitOrderCommand(
+                    o.OrderId,
+                    o.CustomerId,
+                    9.99m,
+                    new[] { new OrderItemDto(o.Sku, 1, 9.99m) }));
             }
-
-            await ctx.SaveChangesAsync(token);
         });
 
         logger.LogInformation("Batch {BatchId}: {Count} orders queued", batchId, request.OrderAmount);

@@ -1,5 +1,4 @@
 using FluentValidation;
-using OrderService.Contracts.Dto.V1;
 
 namespace OrderService.Features.SubmitOrder;
 
@@ -7,32 +6,16 @@ public sealed class SubmitOrderRequestValidator : AbstractValidator<SubmitOrderR
 {
     public SubmitOrderRequestValidator()
     {
-        RuleFor(x => x.CustomerId)
-            .NotEmpty()
-            .WithMessage("CustomerId must not be empty.");
-
-        RuleFor(x => x.OrderItems)
-            .NotEmpty()
-            .WithMessage("Order must contain at least one item.");
-
-        RuleForEach(x => x.OrderItems).SetValidator(new OrderItemDtoValidator());
-    }
-}
-
-internal sealed class OrderItemDtoValidator : AbstractValidator<OrderItemDto>
-{
-    public OrderItemDtoValidator()
-    {
-        RuleFor(x => x.Sku)
-            .NotEmpty()
-            .WithMessage("SKU must not be empty.");
-
-        RuleFor(x => x.Quantity)
-            .GreaterThan(0)
-            .WithMessage("Quantity must be greater than zero.");
-
-        RuleFor(x => x.UnitPrice)
-            .GreaterThan(0)
-            .WithMessage("Unit price must not be negative.");
+        RuleFor(x => x.CustomerId).NotEmpty();
+        RuleFor(x => x.Items).NotEmpty();
+        RuleForEach(x => x.Items).ChildRules(item =>
+        {
+            item.RuleFor(i => i.Sku).NotEmpty().MaximumLength(100);
+            item.RuleFor(i => i.Quantity).GreaterThan(0);
+            item.RuleFor(i => i.UnitPrice).GreaterThan(0);
+        });
+        RuleFor(x => x.Items)
+            .Must(items => items.Select(i => i.Sku.ToLowerInvariant()).Distinct().Count() == items.Count)
+            .WithMessage("Duplicate SKUs are not allowed.");
     }
 }
