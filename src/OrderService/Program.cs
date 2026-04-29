@@ -1,5 +1,4 @@
 using Contracts.Commands;
-using Contracts.Events;
 using FluentValidation;
 using JasperFx.Core;
 using JasperFx.Resources;
@@ -10,7 +9,6 @@ using OpenTelemetry.Trace;
 using OrderService.Infrastructure.Http;
 using OrderService.Infrastructure.Observability;
 using OrderService.Infrastructure.Persistence;
-using OrderService.Saga;
 using Serilog;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
@@ -68,6 +66,9 @@ builder.UseWolverine(opts =>
     opts.PublishMessage<AddInventoryCommand>().ToRabbitQueue("inventory-service");
     opts.PublishMessage<ProcessPaymentCommand>().ToRabbitQueue("payment-service");
 
+    opts.Policies.UseDurableInboxOnAllListeners();
+    opts.Policies.UseDurableOutboxOnAllSendingEndpoints();
+    
     // ── Routing: inbound ─────────────────────────────────────────────────────
     // Events published by InventoryService and PaymentService; consumed by the saga
     opts.ListenToRabbitQueue("order-service-events");

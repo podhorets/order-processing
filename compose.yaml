@@ -1,18 +1,20 @@
+name: orderprocessing-ref
+
 services:
 
   order-service:
     build:
       context: .
       dockerfile: src/OrderService/Dockerfile
-    image: order-service:latest
+    image: order-service-ref:latest
     ports:
-      - "8080:8080"
+      - "9088:8080"
     depends_on:
-      order-db:  { condition: service_healthy }
-      rabbitmq:  { condition: service_healthy }
+      order-db-v2:  { condition: service_healthy }
+      rabbitmq-v2:  { condition: service_healthy }
     environment:
-      ConnectionStrings__Database: "Host=order-db;Port=5432;Database=orders;Username=app;Password=app"
-      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672"
+      ConnectionStrings__Database: "Host=order-db-v2;Port=5432;Database=orders;Username=app;Password=app"
+      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq-v2:5672"
       ASPNETCORE_ENVIRONMENT: Development
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
@@ -26,15 +28,15 @@ services:
     build:
       context: .
       dockerfile: src/InventoryService/Dockerfile
-    image: inventory-service:latest
+    image: inventory-service-ref:latest
     ports:
-      - "8081:8080"
+      - "9087:8080"
     depends_on:
       inventory-db: { condition: service_healthy }
-      rabbitmq:     { condition: service_healthy }
+      rabbitmq-v2:  { condition: service_healthy }
     environment:
       ConnectionStrings__Database: "Host=inventory-db;Port=5432;Database=inventory;Username=app;Password=app"
-      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672"
+      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq-v2:5672"
       ASPNETCORE_ENVIRONMENT: Development
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
@@ -46,15 +48,15 @@ services:
     build:
       context: .
       dockerfile: src/PaymentService/Dockerfile
-    image: payment-service:latest
+    image: payment-service-ref:latest
     ports:
-      - "8082:8080"
+      - "9089:8080"
     depends_on:
       payment-db: { condition: service_healthy }
-      rabbitmq:   { condition: service_healthy }
+      rabbitmq-v2: { condition: service_healthy }
     environment:
       ConnectionStrings__Database: "Host=payment-db;Port=5432;Database=payments;Username=app;Password=app"
-      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672"
+      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq-v2:5672"
       ASPNETCORE_ENVIRONMENT: Development
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
@@ -68,6 +70,7 @@ services:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
     environment:
       DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+      ASPNETCORE_URLS: "http://0.0.0.0:18888"
     ports:
       - "18888:18888"  # UI
       - "18889:18889"  # OTLP gRPC
@@ -77,12 +80,12 @@ services:
 
   # ── Databases ─────────────────────────────────────────────────────────────────
 
-  order-db:
+  order-db-v2:
     image: postgres:17-alpine
-    container_name: order-db
+    container_name: order-db-ref
     environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: orders }
     volumes: [order_pgdata:/var/lib/postgresql/data]
-    ports: ["5433:5432"]
+    ports: ["6433:5432"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d orders"]
       interval: 5s
@@ -92,10 +95,10 @@ services:
 
   inventory-db:
     image: postgres:17-alpine
-    container_name: inventory-db
+    container_name: inventory-db-ref
     environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: inventory }
     volumes: [inventory_pgdata:/var/lib/postgresql/data]
-    ports: ["5434:5432"]
+    ports: ["6434:5432"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d inventory"]
       interval: 5s
@@ -105,10 +108,10 @@ services:
 
   payment-db:
     image: postgres:17-alpine
-    container_name: payment-db
+    container_name: payment-db-ref
     environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: payments }
     volumes: [payment_pgdata:/var/lib/postgresql/data]
-    ports: ["5435:5432"]
+    ports: ["6435:5432"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d payments"]
       interval: 5s
@@ -116,12 +119,12 @@ services:
       retries: 5
     networks: [backend]
 
-  rabbitmq:
+  rabbitmq-v2:
     image: rabbitmq:4-management-alpine
-    container_name: rabbitmq
+    container_name: rabbitmq-ref
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "6672:5672"                         # master uses 5672
+      - "16672:15672"                       # master uses 15672
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
